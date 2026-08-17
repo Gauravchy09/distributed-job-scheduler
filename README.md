@@ -345,8 +345,11 @@ one behaviour this project depends on.
 
 ## Stack
 
-Java 17 · Spring Boot 3 · Spring Web / Data JPA / Validation / Actuator · PostgreSQL 16 · Flyway ·
-Redis 7 · Micrometer · Testcontainers · JUnit 5 · Docker Compose
+Java 21 · Spring Boot 4.1 · Spring WebMVC / Data JPA / Validation / Cache / Actuator · PostgreSQL 16 ·
+Flyway · Redis 7 · Micrometer · JUnit 5 · Docker Compose
+
+Testcontainers is not on the dependency list yet — it arrives with the Week 4 test suite. The Tests
+section above describes the intended setup, not a suite that runs today.
 
 ## Layout
 
