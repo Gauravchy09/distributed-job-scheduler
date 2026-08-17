@@ -1,0 +1,57 @@
+# Infrastructure for local development.
+# Day 1: just Postgres + Redis. The app service gets added in Week 2 (Day 13),
+# once there is something worth containerising.
+#
+# Usage:  docker compose up -d
+#         docker compose exec postgres psql -U scheduler -d scheduler
+#         docker compose down          (keeps data)
+#         docker compose down -v       (wipes data — use when a migration goes wrong)
+
+services:
+  postgres:
+    # Pinned to 16 to match the pre-existing postgres-data volume. Everything this
+    # project relies on (SKIP LOCKED since 9.5, JSONB, partial indexes) is present.
+    # A major-version bump would need a dump/restore, not just an image tag change —
+    # Postgres refuses to start on a data dir from a different major version.
+    image: postgres:16-alpine
+    container_name: djs-postgres
+    environment:
+      POSTGRES_USER: scheduler
+      POSTGRES_PASSWORD: scheduler
+      POSTGRES_DB: scheduler
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    # Compose waits for this before reporting the service healthy. Without it,
+    # the app can start and fail its first connection during a cold boot.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scheduler -d scheduler"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # Makes every lock wait visible in the container logs — invaluable on Day 1
+    # when you are trying to *see* one transaction blocking on another.
+    command:
+      - "postgres"
+      - "-c"
+      - "log_lock_waits=on"
+      - "-c"
+      - "deadlock_timeout=1s"
+
+  redis:
+    image: redis:7-alpine
+    container_name: djs-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:
